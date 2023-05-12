@@ -28,7 +28,10 @@ setup(
 	author_email='chris@ouroboroscoding.com',
 	license='MIT',
 	packages=['mdtsb'],
+	python_requires='>=3.10',
 	install_requires=[
+		'boto3>=1.26.79',
+		'jobject>=1.0.1',
 		'termcolor>=1.1.0'
 	],
 	entry_points={
