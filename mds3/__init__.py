@@ -1,8 +1,8 @@
 # coding=utf8
-""" MDTSB
+""" mds3
 
 Goes through the config of each requested database and creates the backup,
-compresses it, and stores it on s3
+zipes it, and stores it on s3
 """
 
 __author__		= "Chris Nasr"
@@ -60,7 +60,7 @@ def main(conf, databases):
 	"""
 
 	# Greet the user
-	color('magenta', 'MDTSB v%s' % __version__)
+	color('magenta', 'mds3 v%s' % __version__)
 
 	# Go through each database name passed
 	for db in databases:
@@ -89,15 +89,15 @@ def main(conf, databases):
 		if 'profile' not in config:
 			config.profile = 'default'
 
-		# If the compress flag is missing
-		if 'compress' not in config:
-			config.compress = False
+		# If the zip flag is missing
+		if 'zip' not in config:
+			config.zip = False
 
 		# If the key is missing
 		if 'key' not in config:
-			config.key = '%s_|DATETIME|.sql%s' % (
+			config.key = 'backup_|DATETIME|.sql%s' % (
 				db,
-				config.compress and '.gz' or ''
+				config.zip and '.gz' or ''
 			)
 
 		# If there's no database, assume the name we are working on
@@ -126,7 +126,7 @@ def main(conf, databases):
 			'dbs': config.databases,
 			'file': file,
 			'opts': ' '.join(lArgs),
-			'zip': ('compress' in config and config.compress) and '| gzip ' or ''
+			'zip': ('zip' in config and config.zip) and '| gzip ' or ''
 		}
 
 		# Run the command to generate the sql data
