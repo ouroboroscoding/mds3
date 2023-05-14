@@ -61,13 +61,13 @@ def mds3(settings: jobject):
 		return False
 
 	# If the key is missing
-	if 'key' not in settings or not settings.key is None:
+	if 'key' not in settings or settings.key is None:
 		settings.key = 'backup_%Y%m%d%H%M%S.sql'
 		if settings.zip:
 			settings.key += '.gz'
 
 	# If there's no database, assume the name we are working on
-	if 'database' not in settings or not settings.database is None:
+	if 'database' not in settings or settings.database is None:
 		error('"database" missing from settings, skipping')
 		return False
 
