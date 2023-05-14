@@ -1,5 +1,5 @@
 # coding=utf8
-""" mds3
+"""mds3
 
 Goes through the config of each requested database and creates the backup,
 zipes it, and stores it on s3
@@ -17,6 +17,7 @@ __all__ = [ 'main' ]
 # Python imports
 from copy import copy
 from datetime import datetime
+from json import dumps
 from ntpath import basename
 from subprocess import run
 from time import time
@@ -30,11 +31,6 @@ from .s3 import put
 from .version import __version__
 
 # Constants
-KEY_FIELDS = {
-	'|TIMESTAMP|': lambda dt: int(time.time()),
-	'|DATETIME|': lambda dt: dt.strftime('%Y%m%d%H%M%S'),
-	'|DAYOFWEEK|': lambda dt: WEEKDAYS[dt.weekday()]
-}
 MYSQL_DUMP_FIELDS = {
 	'host': '-h %s',
 	'port': '-P %d',
@@ -42,105 +38,75 @@ MYSQL_DUMP_FIELDS = {
 	'password': '-p%s',
 	'options': '%s'
 }
-WEEKDAYS = {
-	0: 'mon', 1: 'tue', 2: 'wed', 3: 'thu', 4: 'fri', 5: 'sat', 6: 'sun'
-}
 
-def main(conf, databases):
-	"""Main
+def mds3(settings: jobject):
+	"""MDS3
 
-	Primary entry point into the script
+	Run a mysqldump and load the results onto S3
 
 	Arguments:
-		conf (dict): The configuration for the apps to run
-		databases (list): The list of databases to backup
+		settings (jobject): The configuration for the apps to run
 
 	Returns:
 		bool
 	"""
 
-	# Greet the user
-	color('magenta', 'mds3 v%s' % __version__)
+	# If we're in verbose mode
+	if settings.verbose:
+		print('Received the following settings:\n%s' % dumps(settings, indent=4))
 
-	# Go through each database name passed
-	for db in databases:
+	# If the bucket is missing
+	if 'bucket' not in settings:
+		error('"bucket" missing from settings, skipping')
+		return False
 
-		# Notify the user
-		color('white', 'Working on `%s`' % db)
+	# If the key is missing
+	if 'key' not in settings:
+		settings.key = 'backup_%Y%m%d%H%M%S.sql'
+		if settings.zip:
+			settings.key += '.gz'
 
-		# Does the db exist in the config?
-		if db not in conf:
-			error('`%s` does not exist in the given config, skipping' % db)
-			continue
+	# If there's no database, assume the name we are working on
+	if 'database' not in settings:
+		error('"database" missing from settings, skipping')
+		return False
 
-		# If there's a default section, merge it with the db conf
-		if '__default__' in conf:
-			config = copy(conf.__default__)
-			config.update(conf[db])
-		else:
-			config = copy(conf[db])
+	# Generate a date time
+	dt = datetime.now()
 
-		# If the bucket is missing
-		if 'bucket' not in config:
-			error('"bucket" missing from `%s`, skipping' % db)
-			continue
+	# Convert possible arguments to the key
+	print(settings.key)
+	settings.key = dt.strftime(settings.key)
 
-		# If the profile is missing
-		if 'profile' not in config:
-			config.profile = 'default'
+	# Go through each of the possible settings options
+	lArgs = []
+	for k in MYSQL_DUMP_FIELDS:
+		if k in settings:
+			lArgs.append(MYSQL_DUMP_FIELDS[k] % settings[k])
 
-		# If the zip flag is missing
-		if 'zip' not in config:
-			config.zip = False
+	# Get the basename
+	file = basename(settings.key)
 
-		# If the key is missing
-		if 'key' not in config:
-			config.key = 'backup_|DATETIME|.sql%s' % (
-				db,
-				config.zip and '.gz' or ''
-			)
+	# Command
+	command = 'mysqldump %(opts)s --databases %(dbs)s%(zip)s' % {
+		'dbs': ' '.join(settings.database),
+		'file': file,
+		'opts': ' '.join(lArgs),
+		'zip': ('zip' in settings and settings.zip) and ' | gzip' or ''
+	}
 
-		# If there's no database, assume the name we are working on
-		if 'databases' not in config:
-			config.databases = db
+	# Run the command to generate the sql data
+	result = run(
+		command,
+		shell=True,
+		capture_output=True
+	)
 
-		# Generate a date time
-		dt = datetime.now()
+	# Add the content to the settings
+	settings.content = result.stdout
 
-		# Convert possible arguments to the key
-		for k in KEY_FIELDS:
-			if k in config.key:
-				config.key = config.key.replace(k, KEY_FIELDS[k](dt))
-
-		# Go through each of the possible config options
-		lArgs = []
-		for k in MYSQL_DUMP_FIELDS:
-			if k in config:
-				lArgs.append(MYSQL_DUMP_FIELDS[k] % config[k])
-
-		# Get the basename
-		file = basename(config.key)
-
-		# Command
-		command = 'mysqldump %(opts)s --databases %(dbs)s %(zip)s' % {
-			'dbs': config.databases,
-			'file': file,
-			'opts': ' '.join(lArgs),
-			'zip': ('zip' in config and config.zip) and '| gzip ' or ''
-		}
-
-		# Run the command to generate the sql data
-		result = run(
-			command,
-			shell=True,
-			capture_output=True
-		)
-
-		# Add the content to the config
-		config.content = result.stdout
-
-		# Store the file on S3
-		put(config)
+	# Store the file on S3
+	put(settings)
 
 	# Return OK
 	return True

@@ -66,7 +66,7 @@ def put(info):
 	headers = {
 		'ACL': 'private',
 		'Body': info.content,
-		'ContentType': info.compress and 'application/gzip' or 'text/plain',
+		'ContentType': info.zip and 'application/gzip' or 'text/plain',
 		'ContentLength': len(info.content)
 	}
 

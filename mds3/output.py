@@ -19,7 +19,7 @@ import sys
 # Pip imports
 from termcolor import colored
 
-def color(color_, msg, eol='\n'):
+def color(color_, msg, end='\n'):
 	"""Color
 
 	Prints bold messages in a specific color
@@ -27,54 +27,54 @@ def color(color_, msg, eol='\n'):
 	Arguments:
 
 		arg (str): The message to print
-		eol (str): The string to place at the end of the message
+		end (str): The string to place at the end of the message
 
 	Returns:
 		None
 	"""
 	sys.stdout.write(
 		colored(
-			'%s%s' % (msg, eol),
+			'%s%s' % (msg, end),
 			color=color_,
 			attrs=['bold']
 		)
 	)
 
-def error(msg, eol='\n'):
+def error(msg, end='\n'):
 	"""Error
 
 	Print bold red text to stderr
 
 	Arguments:
 		msg (str): The message to print
-		eol (str): The string to place at the end of the message
+		end (str): The string to place at the end of the message
 
 	Returns:
 		None
 	"""
 	sys.stderr.write(
 		colored(
-			'%s%s' % (msg, eol),
+			'%s%s' % (msg, end),
 			color='red',
 			attrs=['bold']
 		)
 	)
 
-def verbose(msg, eol='\n'):
+def verbose(msg, end='\n'):
 	"""Verbose
 
 	Print bold white text to stdout
 
 	Arguments
 		msg (str): The message to print
-		eol (str): The string to place at the end of the message
+		end (str): The string to place at the end of the message
 
 	Returns:
 		None
 	"""
 	sys.stdout.write(
 		colored(
-			'%s%s' % (msg, eol),
+			'%s%s' % (msg, end),
 			color='white',
 			attrs=['bold']
 		)
