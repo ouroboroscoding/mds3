@@ -26,7 +26,7 @@ from time import time
 from jobject import jobject
 
 # Local imports
-from .output import color, error
+from .output import error, verbose
 from .s3 import put
 from .version import __version__
 
@@ -53,21 +53,21 @@ def mds3(settings: jobject):
 
 	# If we're in verbose mode
 	if settings.verbose:
-		print('Received the following settings:\n%s' % dumps(settings, indent=4))
+		verbose('Received the following settings:\n%s' % dumps(settings, indent=4))
 
 	# If the bucket is missing
-	if 'bucket' not in settings:
+	if 'bucket' not in settings or settings.bucket is None:
 		error('"bucket" missing from settings, skipping')
 		return False
 
 	# If the key is missing
-	if 'key' not in settings:
+	if 'key' not in settings or not settings.key is None:
 		settings.key = 'backup_%Y%m%d%H%M%S.sql'
 		if settings.zip:
 			settings.key += '.gz'
 
 	# If there's no database, assume the name we are working on
-	if 'database' not in settings:
+	if 'database' not in settings or not settings.database is None:
 		error('"database" missing from settings, skipping')
 		return False
 
@@ -75,7 +75,6 @@ def mds3(settings: jobject):
 	dt = datetime.now()
 
 	# Convert possible arguments to the key
-	print(settings.key)
 	settings.key = dt.strftime(settings.key)
 
 	# Go through each of the possible settings options

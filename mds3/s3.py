@@ -4,14 +4,11 @@
 Various helper functions for using S3
 """
 
-# Import future
-from __future__ import print_function, absolute_import
-
 __author__		= "Chris Nasr"
 __copyright__	= "OuroborosCoding"
 __maintainer__	= "Chris Nasr"
 __email__		= "chris@ouroboroscoding.com"
-__created__		= "2017-12-05"
+__created__		= "2023-05-12"
 
 # Limit exports
 __all__ = [ 'put' ]
