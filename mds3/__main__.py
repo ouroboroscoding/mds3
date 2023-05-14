@@ -16,7 +16,6 @@ __all__ = [ 'cli' ]
 # Python imports
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from os import path
-from pprint import pprint
 from configparser import ConfigParser
 import sys
 
@@ -82,7 +81,7 @@ def cli():
 
 	# Attempt to load the config file
 	try:
-		cp = ConfigParser()
+		cp = ConfigParser(interpolation=None)
 		cp.read(args.config)
 		cp.add_section('_NO_SECTION_')
 		config = {}
